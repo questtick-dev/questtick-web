@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuestTick — Turn ANY Game Wiki into an Interactive Checklist & Tracker</title>
+  <meta name="description" content="Commercial Chrome extension that injects live checkboxes, progress bars, and Shadow DOM HUD overlays into gaming wikis like wiki.gg, Fandom, Fextralife, and Stardew Valley." />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2310B981'/%3E%3Cstop offset='50%25' stop-color='%2314B8A6'/%3E%3Cstop offset='100%25' stop-color='%2306B6D4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='16' y='16' width='96' height='96' rx='28' fill='%23131A26' stroke='rgba(255,255,255,0.1)' stroke-width='4'/%3E%3Cpath d='M42 66 L56 80 L88 48' fill='none' stroke='url(%23g)' stroke-width='12' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+
+  <style>
+    :root {
+      --bg: #0B0F17;
+      --surface: #131A26;
+      --surface-elevated: #1B2433;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.18);
+      --primary: #10B981;
+      --primary-hover: #059669;
+      --primary-glow: rgba(16, 185, 129, 0.25);
+      --cyan: #06B6D4;
+      --gold: #F59E0B;
+      --gold-glow: rgba(245, 158, 11, 0.25);
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --radius: 16px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      selection-background-color: var(--primary);
+      selection-color: #000;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Header & Navigation */
+    header.site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(11, 15, 23, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 0;
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--cyan) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0B0F17;
+      font-weight: 900;
+      font-size: 18px;
+      box-shadow: 0 0 16px var(--primary-glow);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Language Switcher */
+    .lang-switcher {
+      display: inline-flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 3px;
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .lang-btn.active {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 10px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, #059669 100%);
+      color: #0B0F17;
+      box-shadow: 0 4px 18px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+      filter: brightness(1.08);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface-elevated);
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+
+    .btn-pro {
+      background: linear-gradient(135deg, var(--gold) 0%, #D97706 100%);
+      color: #0B0F17;
+      box-shadow: 0 4px 18px var(--gold-glow);
+    }
+
+    .btn-pro:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+      filter: brightness(1.08);
+    }
+
+    /* Hero Section */
+    section.hero {
+      padding: 80px 0 60px;
+      text-align: center;
+      position: relative;
+    }
+
+    .hero-glow {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(6, 182, 212, 0.05) 50%, transparent 70%);
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 9999px;
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #34D399;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 62px);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      max-width: 900px;
+      margin: 0 auto 24px;
+    }
+
+    .hero h1 span.gradient-text {
+      background: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #38BDF8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p.subtitle {
+      font-size: clamp(16px, 2vw, 20px);
+      color: var(--text-muted);
+      max-width: 740px;
+      margin: 0 auto 36px;
+      line-height: 1.5;
+    }
+
+    .hero-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .supported-wikis-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 16px;
+    }
+
+    .wiki-tag {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    /* Star Feature: Interactive Live Demo */
+    section.live-demo-section {
+      padding: 40px 0 80px;
+    }
+
+    .demo-window {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.7), 0 0 32px rgba(16, 185, 129, 0.1);
+      overflow: hidden;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .demo-window-header {
+      background: rgba(11, 15, 23, 0.6);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .window-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background: #EF4444; }
+    .dot-yellow { background: #F59E0B; }
+    .dot-green { background: #10B981; }
+
+    .window-url-bar {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-family: monospace;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      max-width: 520px;
+    }
+
+    .demo-content {
+      padding: 24px;
+    }
+
+    .demo-hud-bar {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .demo-stats {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .demo-progress-label {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .demo-progress-bar {
+      width: 160px;
+      height: 8px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .demo-progress-fill {
+      height: 100%;
+      width: 33%;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--cyan) 100%);
+      transition: width 0.3s ease;
+      border-radius: 9999px;
+    }
+
+    .demo-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .demo-search-input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      color: #fff;
+      outline: none;
+      width: 160px;
+    }
+
+    .demo-search-input:focus {
+      border-color: var(--primary);
+    }
+
+    .demo-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .demo-btn:hover {
+      color: #fff;
+      border-color: var(--border-hover);
+    }
+
+    .demo-btn.active {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Interactive Table */
+    .table-responsive {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    table.demo-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      text-align: left;
+    }
+
+    table.demo-table th {
+      background: rgba(0, 0, 0, 0.35);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 800;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    table.demo-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s ease;
+    }
+
+    table.demo-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    table.demo-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    table.demo-table tr.completed-row td {
+      opacity: 0.55;
+    }
+
+    table.demo-table tr.completed-row td.item-name {
+      text-decoration: line-through;
+    }
+
+    table.demo-table tr.hidden-row {
+      display: none;
+    }
+
+    .custom-checkbox {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      background: var(--bg);
+    }
+
+    .custom-checkbox:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    .custom-checkbox.checked {
+      background: var(--primary);
+      border-color: var(--primary);
+      box-shadow: 0 0 12px var(--primary-glow);
+    }
+
+    .custom-checkbox.checked::after {
+      content: "✓";
+      color: #0B0F17;
+      font-weight: 900;
+      font-size: 13px;
+    }
+
+    /* Key Benefits Grid */
+    section.benefits {
+      padding: 80px 0;
+    }
+
+    .section-title {
+      text-align: center;
+      max-width: 680px;
+      margin: 0 auto 50px;
+    }
+
+    .section-title h2 {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .section-title p {
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    .benefit-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .benefit-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-hover);
+      box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.5);
+    }
+
+    .benefit-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+
+    .benefit-card h3 {
+      font-size: 19px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .benefit-card p {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* Free vs Pro Pricing Comparison */
+    section.pricing {
+      padding: 80px 0;
+      background: linear-gradient(180deg, var(--bg) 0%, rgba(19, 26, 38, 0.4) 100%);
+    }
+
+    .pricing-table-wrapper {
+      max-width: 840px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.6);
+    }
+
+    .pricing-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .pricing-table th,
+    .pricing-table td {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .pricing-table th {
+      background: rgba(0, 0, 0, 0.35);
+      font-weight: 800;
+    }
+
+    .pricing-table td.col-free {
+      text-align: center;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .pricing-table td.col-pro {
+      text-align: center;
+      color: #FCD34D;
+      font-weight: 800;
+      background: rgba(245, 158, 11, 0.04);
+    }
+
+    .pricing-cta-card {
+      padding: 32px;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(16, 185, 129, 0.08) 100%);
+      border-top: 1px solid rgba(245, 158, 11, 0.2);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    /* FAQ Section */
+    section.faq {
+      padding: 80px 0;
+    }
+
+    .faq-grid {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .faq-item:hover {
+      border-color: var(--border-hover);
+    }
+
+    .faq-question {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .faq-answer {
+      color: var(--text-muted);
+      font-size: 14.5px;
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+
+    /* Footer */
+    footer.site-footer {
+      border-top: 1px solid var(--border);
+      padding: 48px 0 32px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .footer-links a:hover {
+      color: #fff;
+    }
+
+    @media (max-width: 768px) {
+      .hero-buttons {
+        flex-direction: column;
+        width: 100%;
+      }
+      .btn {
+        width: 100%;
+      }
+      .pricing-cta-card {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. Header Navigation -->
+  <header class="site-header">
+    <div class="container nav-inner">
+      <div class="brand-logo">
+        <div class="brand-icon">✓</div>
+        <span>QuestTick</span>
+      </div>
+
+      <div class="nav-actions">
+        <!-- Language Switcher -->
+        <div class="lang-switcher">
+          <button class="lang-btn active" id="btn-lang-en" onclick="setLanguage('en')">EN</button>
+          <button class="lang-btn" id="btn-lang-es" onclick="setLanguage('es')">ES</button>
+        </div>
+
+        <a href="https://chromewebstore.google.com" target="_blank" class="btn btn-primary" data-i18n="navInstall">
+          Add to Chrome
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. Hero Section -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="container">
+      <div class="pill-badge" data-i18n="heroPill">
+        <span>⚡</span> Manifest V3 · Zero Lag · Local-First
+      </div>
+
+      <h1>
+        <span data-i18n="heroTitleStart">Turn ANY Game Wiki into an</span><br />
+        <span class="gradient-text" data-i18n="heroTitleGradient">Interactive Checklist</span>
+      </h1>
+
+      <p class="subtitle" data-i18n="heroSubtitle">
+        Live checkboxes, progress tracking, and distraction-free HUD injected directly into tables across wiki.gg, Fandom, Fextralife, Stardew Valley, Baldur's Gate 3, Elden Ring, and beyond.
+      </p>
+
+      <div class="hero-buttons">
+        <a href="https://chromewebstore.google.com" target="_blank" class="btn btn-primary" style="padding: 14px 30px; font-size: 15px;" data-i18n="heroCtaFree">
+          Add to Chrome — Free
+        </a>
+        <a href="https://polar.sh/questtick/subscriptions" target="_blank" class="btn btn-pro" style="padding: 14px 26px; font-size: 15px;" data-i18n="heroCtaPro">
+          Get QuestTick Pro ($6.99 one-time)
+        </a>
+      </div>
+
+      <div class="supported-wikis-bar">
+        <span data-i18n="supportedWikisLabel">Works out of the box with:</span>
+        <span class="wiki-tag">wiki.gg</span>
+        <span class="wiki-tag">Fandom</span>
+        <span class="wiki-tag">Fextralife</span>
+        <span class="wiki-tag">Stardew Valley</span>
+        <span class="wiki-tag">BG3.wiki</span>
+        <span class="wiki-tag">Terraria</span>
+        <span class="wiki-tag">Minecraft</span>
+        <span class="wiki-tag">Coral Island</span>
+        <span class="wiki-tag">WoW / Wowhead</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. LIVE INTERACTIVE DEMO (STAR SECTION) -->
+  <section class="live-demo-section">
+    <div class="container">
+      <div class="section-title">
+        <div class="pill-badge" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); color: #FBBF24;">
+          🎮 <span data-i18n="demoBadge">Interactive Live Simulator</span>
+        </div>
+        <h2 data-i18n="demoTitle">Try QuestTick Right Here</h2>
+        <p data-i18n="demoSubtitle">Click the checkboxes below to see live progress calculations, instant row filtering, and the hide completed toggle in action.</p>
+      </div>
+
+      <div class="demo-window">
+        <!-- Mock Browser Top Bar -->
+        <div class="demo-window-header">
+          <div class="window-dots">
+            <span class="window-dot dot-red"></span>
+            <span class="window-dot dot-yellow"></span>
+            <span class="window-dot dot-green"></span>
+          </div>
+          <div class="window-url-bar">
+            <span>🔒</span>
+            <span>stardewvalleywiki.com/Fish_and_Legendary_Relics</span>
+          </div>
+          <div style="font-size: 11px; font-weight: 700; color: #10B981;">● QuestTick Active</div>
+        </div>
+
+        <div class="demo-content">
+          <!-- Floating Injected HUD Bar -->
+          <div class="demo-hud-bar">
+            <div class="demo-stats">
+              <div class="brand-icon" style="width: 28px; height: 28px; font-size: 14px;">✓</div>
+              <div>
+                <div class="demo-progress-label" id="demo-count-label">2 / 6 Completed (33%)</div>
+                <div class="demo-progress-bar">
+                  <div class="demo-progress-fill" id="demo-bar-fill"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="demo-controls">
+              <input type="text" id="demo-search-input" class="demo-search-input" placeholder="Filter rows..." oninput="filterDemoRows()" />
+              <button type="button" id="demo-hide-btn" class="demo-btn" onclick="toggleDemoHideCompleted()">
+                👁️ <span data-i18n="demoHideDone">Hide Completed</span>
+              </button>
+              <button type="button" class="demo-btn" onclick="resetDemo()">
+                ↺ <span data-i18n="demoReset">Reset</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Realistic Table -->
+          <div class="table-responsive">
+            <table class="demo-table" id="demo-items-table">
+              <thead>
+                <tr>
+                  <th style="width: 48px; text-align: center;">✓</th>
+                  <th data-i18n="thItem">Item & Relic</th>
+                  <th data-i18n="thSeason">Season / Location</th>
+                  <th data-i18n="thReward">Value / Reward</th>
+                  <th data-i18n="thNotes">Wiki Strategy Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr id="row-1" class="completed-row">
+                  <td style="text-align: center;">
+                    <div class="custom-checkbox checked" onclick="toggleDemoItem(1)"></div>
+                  </td>
+                  <td class="item-name"><strong>Legend Fish</strong></td>
+                  <td>Spring · Mountain Lake (Rain)</td>
+                  <td><span style="color: #FCD34D; font-weight: bold;">5,000g</span></td>
+                  <td>Requires Fishing Level 10. Max difficulty rating.</td>
+                </tr>
+                <tr id="row-2" class="completed-row">
+                  <td style="text-align: center;">
+                    <div class="custom-checkbox checked" onclick="toggleDemoItem(2)"></div>
+                  </td>
+                  <td class="item-name"><strong>Prismatic Shard</strong></td>
+                  <td>All Seasons · Skull Cavern</td>
+                  <td><span style="color: #38BDF8; font-weight: bold;">Galaxy Sword</span></td>
+                  <td>Bring to Desert Pillars to forge the ultimate blade.</td>
+                </tr>
+                <tr id="row-3">
+                  <td style="text-align: center;">
+                    <div class="custom-checkbox" onclick="toggleDemoItem(3)"></div>
+                  </td>
+                  <td class="item-name"><strong>Ancient Fruit Seed</strong></td>
+                  <td>Spring / Summer / Fall</td>
+                  <td><span style="color: #FCD34D; font-weight: bold;">550g / harvest</span></td>
+                  <td>Reproduces every 7 days continuously all season long.</td>
+                </tr>
+                <tr id="row-4">
+                  <td style="text-align: center;">
+                    <div class="custom-checkbox" onclick="toggleDemoItem(4)"></div>
+                  </td>
+                  <td class="item-name"><strong>Hand of Malenia</strong></td>
+                  <td>Elphael · Haligtree Roots</td>
+                  <td><span style="color: #F87171; font-weight: bold;">Waterfowl Katana</span></td>
+                  <td>Boss remembrance weapon with unique ash of war.</td>
+                </tr>
+                <tr id="row-5">
+                  <td style="text-align: center;">
+                    <div class="custom-checkbox" onclick="toggleDemoItem(5)"></div>
+                  </td>
+                  <td class="item-name"><strong>Golden Pumpkin</strong></td>
+                  <td>Fall 27 · Spirit's Eve Maze</td>
+                  <td><span style="color: #FCD34D; font-weight: bold;">2,500g</span></td>
+                  <td>Universally loved gift for all marriage candidates.</td>
+                </tr>
+                <tr id="row-6">
+                  <td style="text-align: center;">
+                    <div class="custom-checkbox" onclick="toggleDemoItem(6)"></div>
+                  </td>
+                  <td class="item-name"><strong>Dinosaur Egg</strong></td>
+                  <td>Mountains / Skull Cavern</td>
+                  <td><span style="color: #34D399; font-weight: bold;">Pet Dinosaur</span></td>
+                  <td>Incubate in Big Coop to hatch a fire-breathing companion.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Key Benefits Grid -->
+  <section class="benefits">
+    <div class="container">
+      <div class="section-title">
+        <h2 data-i18n="benefitsTitle">Built by Gamers, for Gamers</h2>
+        <p data-i18n="benefitsSubtitle">Say goodbye to clunky spreadsheet tabs on your second monitor. Track your 100% runs where you already read.</p>
+      </div>
+
+      <div class="benefits-grid">
+        <div class="benefit-card">
+          <div class="benefit-icon">🛡️</div>
+          <h3 data-i18n="b1Title">Stable Row Fingerprinting</h3>
+          <p data-i18n="b1Desc">Wikis update their tables constantly with game balance patches. QuestTick's canonical FNV-1a hashing ensures your checked items never shift or disappear.</p>
+        </div>
+
+        <div class="benefit-card">
+          <div class="benefit-icon">🎮</div>
+          <h3 data-i18n="b2Title">Multi-Run Save Profiles</h3>
+          <p data-i18n="b2Desc">Keep your Solo character separate from your Co-op or Hardcore runs. Switch profiles in 1 click and track independent checklists per run.</p>
+        </div>
+
+        <div class="benefit-card">
+          <div class="benefit-icon">🧹</div>
+          <h3 data-i18n="b3Title">Clean Wiki Mode (Anti-Ad)</h3>
+          <p data-i18n="b3Desc">Fandom and Fextralife clutter your screen with auto-playing videos and massive sidebars. Clean Wiki Mode strips the garbage so your tables expand to full width.</p>
+        </div>
+
+        <div class="benefit-card">
+          <div class="benefit-icon">📝</div>
+          <h3 data-i18n="b4Title">Custom Item Notes</h3>
+          <p data-i18n="b4Desc">Leave quick reminders right on specific rows: <em>"Already donated to museum"</em>, <em>"Saved for Emily's birthday"</em>, or <em>"Found in floor 42"</em>.</p>
+        </div>
+
+        <div class="benefit-card">
+          <div class="benefit-icon">🔒</div>
+          <h3 data-i18n="b5Title">100% Local & Private</h3>
+          <p data-i18n="b5Desc">Zero tracking, zero analytics, zero external servers. All checklist data lives safely inside your browser's encrypted local storage.</p>
+        </div>
+
+        <div class="benefit-card">
+          <div class="benefit-icon">⚡</div>
+          <h3 data-i18n="b6Title">Lightweight Shadow DOM HUD</h3>
+          <p data-i18n="b6Desc">Content script is under 38 KB pure TypeScript. The floating HUD runs inside an isolated Shadow DOM so wiki styles will never break its design.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Free vs Pro Pricing Comparison -->
+  <section class="pricing">
+    <div class="container">
+      <div class="section-title">
+        <h2 data-i18n="pricingTitle">Simple, Fair Pricing</h2>
+        <p data-i18n="pricingSubtitle">Zero monthly subscriptions. One transparent payment for lifetime access.</p>
+      </div>
+
+      <div class="pricing-table-wrapper">
+        <table class="pricing-table">
+          <thead>
+            <tr>
+              <th data-i18n="thFeature">Feature</th>
+              <th style="text-align: center;" data-i18n="thFree">Free Tier</th>
+              <th style="text-align: center; color: #FCD34D;" data-i18n="thPro">Pro Lifetime</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-i18n="fWikis">Supported Gaming Wikis</td>
+              <td class="col-free" data-i18n="fUnlimited">Unlimited</td>
+              <td class="col-pro" data-i18n="fUnlimited">Unlimited</td>
+            </tr>
+            <tr>
+              <td data-i18n="fProfiles">Save Profiles / Runs</td>
+              <td class="col-free">1 Profile (Main)</td>
+              <td class="col-pro" data-i18n="fUnlimited">Unlimited</td>
+            </tr>
+            <tr>
+              <td data-i18n="fNotes">Custom Item Notes</td>
+              <td class="col-free">3 notes / page</td>
+              <td class="col-pro" data-i18n="fUnlimited">Unlimited</td>
+            </tr>
+            <tr>
+              <td data-i18n="fHub">Global Games Hub</td>
+              <td class="col-free">3 recent pages</td>
+              <td class="col-pro">All Tracked Games & Pages</td>
+            </tr>
+            <tr>
+              <td data-i18n="fThemes">RPG HUD Themes</td>
+              <td class="col-free">Emerald</td>
+              <td class="col-pro">Gold, Cozy, Minimal & Emerald</td>
+            </tr>
+            <tr>
+              <td data-i18n="fClean">Clean Wiki Anti-Distraction Mode</td>
+              <td class="col-free">—</td>
+              <td class="col-pro">✓ Included</td>
+            </tr>
+            <tr>
+              <td data-i18n="fLists">Bulleted & Numbered Lists Checklists</td>
+              <td class="col-free">—</td>
+              <td class="col-pro">✓ Included</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="pricing-cta-card">
+          <div>
+            <div style="font-size: 20px; font-weight: 900; color: #fff;">QuestTick Pro — Lifetime License</div>
+            <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;" data-i18n="pricingNote">
+              $6.99 one-time payment. Instant key activation via Polar.sh.
+            </div>
+          </div>
+          <a href="https://polar.sh/questtick/subscriptions" target="_blank" class="btn btn-pro" style="padding: 12px 28px;" data-i18n="buyProBtn">
+            Get Pro Lifetime — $6.99
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. FAQ Section -->
+  <section class="faq">
+    <div class="container">
+      <div class="section-title">
+        <h2 data-i18n="faqTitle">Frequently Asked Questions</h2>
+        <p data-i18n="faqSubtitle">Everything you need to know about QuestTick.</p>
+      </div>
+
+      <div class="faq-grid">
+        <div class="faq-item">
+          <div class="faq-question">
+            <span data-i18n="q1">Does it work on Brave, Edge, Opera, or Vivaldi?</span>
+            <span>+</span>
+          </div>
+          <div class="faq-answer" data-i18n="a1">
+            Yes! QuestTick is built strictly to the Manifest V3 standard and is 100% compatible with Google Chrome, Microsoft Edge, Brave, Opera, Vivaldi, and any Chromium-based desktop browser.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span data-i18n="q2">Will my checked items disappear when the wiki updates its table?</span>
+            <span>+</span>
+          </div>
+          <div class="faq-answer" data-i18n="a2">
+            No! Unlike fragile row-index tools, QuestTick extracts canonical cell texts and computes an FNV-1a hash fingerprint. Even if the wiki adds new columns, sorts prices, or inserts new rows, your marks stay locked to the exact same item.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span data-i18n="q3">Can I enable QuestTick on an obscure or custom gaming wiki?</span>
+            <span>+</span>
+          </div>
+          <div class="faq-answer" data-i18n="a3">
+            Yes! When you open the extension popup on any unlisted website, click the "Enable QuestTick on this site" button. QuestTick will instantly inject checkboxes into any checklist-style tables on that page.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span data-i18n="q4">Is there any subscription fee?</span>
+            <span>+</span>
+          </div>
+          <div class="faq-answer" data-i18n="a4">
+            No subscriptions whatsoever. The Free tier is free forever. QuestTick Pro is a single $6.99 one-time payment for lifetime access across your devices.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Footer -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="brand-icon" style="width: 24px; height: 24px; font-size: 12px;">✓</div>
+        <span>© 2026 QuestTick. All rights reserved.</span>
+      </div>
+
+      <div class="footer-links">
+        <a href="./privacy.html" data-i18n="footerPrivacy">Privacy Policy</a>
+        <a href="mailto:support@questtick.com">support@questtick.com</a>
+        <a href="https://polar.sh/questtick" target="_blank">Polar Store</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Interactive Demo Script & Translation Dictionary -->
+  <script>
+    // --- 1. Interactive Demo State & Logic ---
+    const demoItems = [
+      { id: 1, checked: true },
+      { id: 2, checked: true },
+      { id: 3, checked: false },
+      { id: 4, checked: false },
+      { id: 5, checked: false },
+      { id: 6, checked: false },
+    ];
+    let hideCompleted = false;
+
+    function toggleDemoItem(id) {
+      const item = demoItems.find(i => i.id === id);
+      if (!item) return;
+      item.checked = !item.checked;
+
+      const row = document.getElementById(`row-${id}`);
+      const chk = row.querySelector('.custom-checkbox');
+
+      if (item.checked) {
+        row.classList.add('completed-row');
+        chk.classList.add('checked');
+      } else {
+        row.classList.remove('completed-row');
+        chk.classList.remove('checked');
+      }
+
+      updateDemoStats();
+      applyDemoVisibility();
+    }
+
+    function toggleDemoHideCompleted() {
+      hideCompleted = !hideCompleted;
+      const btn = document.getElementById('demo-hide-btn');
+      btn.classList.toggle('active', hideCompleted);
+      applyDemoVisibility();
+    }
+
+    function applyDemoVisibility() {
+      const query = document.getElementById('demo-search-input').value.toLowerCase().trim();
+
+      demoItems.forEach(item => {
+        const row = document.getElementById(`row-${item.id}`);
+        const text = row.textContent.toLowerCase();
+        const matchesQuery = !query || text.includes(query);
+        const shouldHide = hideCompleted && item.checked;
+
+        if (!matchesQuery || shouldHide) {
+          row.classList.add('hidden-row');
+        } else {
+          row.classList.remove('hidden-row');
+        }
+      });
+    }
+
+    function filterDemoRows() {
+      applyDemoVisibility();
+    }
+
+    function updateDemoStats() {
+      const checkedCount = demoItems.filter(i => i.checked).length;
+      const total = demoItems.length;
+      const percent = Math.round((checkedCount / total) * 100);
+
+      const label = document.getElementById('demo-count-label');
+      const fill = document.getElementById('demo-bar-fill');
+
+      label.textContent = `${checkedCount} / ${total} ${currentLang === 'es' ? 'Completados' : 'Completed'} (${percent}%)`;
+      fill.style.width = `${percent}%`;
+    }
+
+    function resetDemo() {
+      demoItems.forEach(i => i.checked = false);
+      for (let id = 1; id <= 6; id++) {
+        const row = document.getElementById(`row-${id}`);
+        const chk = row.querySelector('.custom-checkbox');
+        row.classList.remove('completed-row');
+        chk.classList.remove('checked');
+      }
+      document.getElementById('demo-search-input').value = '';
+      hideCompleted = false;
+      document.getElementById('demo-hide-btn').classList.remove('active');
+      updateDemoStats();
+      applyDemoVisibility();
+    }
+
+    // --- 2. Bilingual i18n Dictionary ---
+    const translations = {
+      en: {
+        navInstall: "Add to Chrome",
+        heroPill: "⚡ Manifest V3 · Zero Lag · Local-First",
+        heroTitleStart: "Turn ANY Game Wiki into an",
+        heroTitleGradient: "Interactive Checklist",
+        heroSubtitle: "Live checkboxes, progress tracking, and distraction-free HUD injected directly into tables across wiki.gg, Fandom, Fextralife, Stardew Valley, Baldur's Gate 3, Elden Ring, and beyond.",
+        heroCtaFree: "Add to Chrome — Free",
+        heroCtaPro: "Get QuestTick Pro ($6.99 one-time)",
+        supportedWikisLabel: "Works out of the box with:",
+        demoBadge: "Interactive Live Simulator",
+        demoTitle: "Try QuestTick Right Here",
+        demoSubtitle: "Click the checkboxes below to see live progress calculations, instant row filtering, and the hide completed toggle in action.",
+        demoHideDone: "Hide Completed",
+        demoReset: "Reset",
+        thItem: "Item & Relic",
+        thSeason: "Season / Location",
+        thReward: "Value / Reward",
+        thNotes: "Wiki Strategy Notes",
+        benefitsTitle: "Built by Gamers, for Gamers",
+        benefitsSubtitle: "Say goodbye to clunky spreadsheet tabs on your second monitor. Track your 100% runs where you already read.",
+        b1Title: "Stable Row Fingerprinting",
+        b1Desc: "Wikis update their tables constantly with game balance patches. QuestTick's canonical FNV-1a hashing ensures your checked items never shift or disappear.",
+        b2Title: "Multi-Run Save Profiles",
+        b2Desc: "Keep your Solo character separate from your Co-op or Hardcore runs. Switch profiles in 1 click and track independent checklists per run.",
+        b3Title: "Clean Wiki Mode (Anti-Ad)",
+        b3Desc: "Fandom and Fextralife clutter your screen with auto-playing videos and massive sidebars. Clean Wiki Mode strips the garbage so your tables expand to full width.",
+        b4Title: "Custom Item Notes",
+        b4Desc: "Leave quick reminders right on specific rows: 'Already donated to museum', 'Saved for Emily's birthday', or 'Found in floor 42'.",
+        b5Title: "100% Local & Private",
+        b5Desc: "Zero tracking, zero analytics, zero external servers. All checklist data lives safely inside your browser's encrypted local storage.",
+        b6Title: "Lightweight Shadow DOM HUD",
+        b6Desc: "Content script is under 38 KB pure TypeScript. The floating HUD runs inside an isolated Shadow DOM so wiki styles will never break its design.",
+        pricingTitle: "Simple, Fair Pricing",
+        pricingSubtitle: "Zero monthly subscriptions. One transparent payment for lifetime access.",
+        thFeature: "Feature",
+        thFree: "Free Tier",
+        thPro: "Pro Lifetime",
+        fWikis: "Supported Gaming Wikis",
+        fUnlimited: "Unlimited",
+        fProfiles: "Save Profiles / Runs",
+        fNotes: "Custom Item Notes",
+        fHub: "Global Games Hub",
+        fThemes: "RPG HUD Themes",
+        fClean: "Clean Wiki Anti-Distraction Mode",
+        fLists: "Bulleted & Numbered Lists Checklists",
+        pricingNote: "$6.99 one-time payment. Instant key activation via Polar.sh.",
+        buyProBtn: "Get Pro Lifetime — $6.99",
+        faqTitle: "Frequently Asked Questions",
+        faqSubtitle: "Everything you need to know about QuestTick.",
+        q1: "Does it work on Brave, Edge, Opera, or Vivaldi?",
+        a1: "Yes! QuestTick is built strictly to the Manifest V3 standard and is 100% compatible with Google Chrome, Microsoft Edge, Brave, Opera, Vivaldi, and any Chromium-based desktop browser.",
+        q2: "Will my checked items disappear when the wiki updates its table?",
+        a2: "No! Unlike fragile row-index tools, QuestTick extracts canonical cell texts and computes an FNV-1a hash fingerprint. Even if the wiki adds new columns, sorts prices, or inserts new rows, your marks stay locked to the exact same item.",
+        q3: "Can I enable QuestTick on an obscure or custom gaming wiki?",
+        a3: "Yes! When you open the extension popup on any unlisted website, click the 'Enable QuestTick on this site' button. QuestTick will instantly inject checkboxes into any checklist-style tables on that page.",
+        q4: "Is there any subscription fee?",
+        a4: "No subscriptions whatsoever. The Free tier is free forever. QuestTick Pro is a single $6.99 one-time payment for lifetime access across your devices.",
+        footerPrivacy: "Privacy Policy"
+      },
+      es: {
+        navInstall: "Instalar en Chrome",
+        heroPill: "⚡ Manifest V3 · Sin Retardo · Privado en Local",
+        heroTitleStart: "Convierte CUALQUIER Wiki en una",
+        heroTitleGradient: "Checklist Interactiva",
+        heroSubtitle: "Casillas de verificación en vivo, progreso continuo y HUD flotante sin anuncios inyectados en tablas de wiki.gg, Fandom, Fextralife, Stardew Valley, Baldur's Gate 3, Elden Ring y más.",
+        heroCtaFree: "Añadir a Chrome — Gratis",
+        heroCtaPro: "Conseguir QuestTick Pro ($6,99 pago único)",
+        supportedWikisLabel: "Funciona de inmediato con:",
+        demoBadge: "Simulador Interactivo en Vivo",
+        demoTitle: "Prueba QuestTick Aquí Mismo",
+        demoSubtitle: "Haz clic en las casillas para ver el cálculo de progreso en tiempo real, el buscador instantáneo y el botón de ocultar completados.",
+        demoHideDone: "Ocultar Completados",
+        demoReset: "Reiniciar",
+        thItem: "Ítem y Reliquia",
+        thSeason: "Temporada / Zona",
+        thReward: "Valor / Recompensa",
+        thNotes: "Estrategia de la Wiki",
+        benefitsTitle: "Diseñado por Jugadores, para Jugadores",
+        benefitsSubtitle: "Despídete de hojas de cálculo infinitas en tu segundo monitor. Marca tu progreso directamente donde lees las guías.",
+        b1Title: "Huellas Estables de Fila",
+        b1Desc: "Las wikis actualizan tablas con parches de equilibrio. El algoritmo de hashing FNV-1a de QuestTick garantiza que tus checks jamás se descoloquen.",
+        b2Title: "Múltiples Perfiles de Partida",
+        b2Desc: "Separa tu partida en solitario de tus partidas multijugador o reto. Cambia de perfil en 1 clic y rastrea listas independientes.",
+        b3Title: "Modo Wiki Limpia (Anti-Basura)",
+        b3Desc: "Fandom y Fextralife saturan la pantalla de vídeos flotantes y banners. El modo Wiki Limpia oculta la basura para que las tablas usen todo el ancho.",
+        b4Title: "Notas Rápidas por Ítem",
+        b4Desc: "Anota recordatorios en cualquier fila: 'Ya donado al museo', 'Guardado para el cumpleaños de Emily' o 'Encontrado en planta 42'.",
+        b5Title: "100% Local y Privado",
+        b5Desc: "Cero analíticas, cero rastreadores, cero servidores externos. Todos tus datos residen únicamente en el almacenamiento local cifrado de tu navegador.",
+        b6Title: "HUD Ultraligero en Shadow DOM",
+        b6Desc: "Script de contenido de menos de 38 KB en TypeScript puro. El panel flotante corre aislado en Shadow DOM para no sufrir nunca roturas de estilos.",
+        pricingTitle: "Precios Transparentes y Justos",
+        pricingSubtitle: "Cero suscripciones mensuales. Un único pago para disfrutarlo de por vida.",
+        thFeature: "Característica",
+        thFree: "Plan Gratis",
+        thPro: "Pro de por Vida",
+        fWikis: "Wikis de Videojuegos Soportadas",
+        fUnlimited: "Ilimitadas",
+        fProfiles: "Perfiles / Partidas",
+        fNotes: "Notas Personalizadas",
+        fHub: "Hub Global de Juegos",
+        fThemes: "Temas RPG para el HUD",
+        fClean: "Modo Wiki Limpia (Sin Anuncios)",
+        fLists: "Checks en Listas de Viñetas y Números",
+        pricingNote: "Pago único de $6,99. Activación instantánea con tu clave vía Polar.sh.",
+        buyProBtn: "Conseguir Pro de por Vida — $6,99",
+        faqTitle: "Preguntas Frecuentes",
+        faqSubtitle: "Todo lo que necesitas saber sobre QuestTick.",
+        q1: "¿Funciona en Brave, Edge, Opera o Vivaldi?",
+        a1: "¡Sí! QuestTick cumple estrictamente con el estándar Manifest V3 y es 100% compatible con Google Chrome, Microsoft Edge, Brave, Opera, Vivaldi y cualquier navegador Chromium.",
+        q2: "¿Se borrarán mis ítems marcados si la wiki actualiza la tabla?",
+        a2: "¡No! A diferencia de extensiones frágiles por número de fila, QuestTick calcula una huella canónica FNV-1a de cada celda. Si la wiki añade filas o reordena columnas, tus checks siguen vinculados al ítem exacto.",
+        q3: "¿Puedo activar QuestTick en una wiki pequeña o personalizada?",
+        a3: "¡Sí! Al abrir el menú de la extensión en cualquier página web, pulsa 'Activar QuestTick en este dominio'. Se inyectarán casillas interactivas al instante.",
+        q4: "¿Hay alguna cuota de suscripción periódica?",
+        a4: "Ninguna. La versión gratuita es gratis para siempre. QuestTick Pro es un pago único de $6,99 para acceso ilimitado en todos tus equipos.",
+        footerPrivacy: "Política de Privacidad"
+      }
+    };
+
+    let currentLang = 'en';
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('qt_web_lang', lang);
+
+      document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-lang-es').classList.toggle('active', lang === 'es');
+
+      const dict = translations[lang] || translations.en;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) {
+          el.textContent = dict[key];
+        }
+      });
+
+      updateDemoStats();
+    }
+
+    // Auto-detect browser language or load saved
+    const saved = localStorage.getItem('qt_web_lang');
+    if (saved === 'es' || (!saved && navigator.language && navigator.language.startsWith('es'))) {
+      setLanguage('es');
+    } else {
+      setLanguage('en');
+    }
+  </script>
+</body>
+</html>

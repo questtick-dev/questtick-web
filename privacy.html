@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — QuestTick Chrome Extension</title>
+  <meta name="description" content="Official Privacy Policy for QuestTick: 100% local-first data storage, zero analytics, zero data selling, and secure Polar.sh license validation." />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2310B981'/%3E%3Cstop offset='50%25' stop-color='%2314B8A6'/%3E%3Cstop offset='100%25' stop-color='%2306B6D4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='16' y='16' width='96' height='96' rx='28' fill='%23131A26' stroke='rgba(255,255,255,0.1)' stroke-width='4'/%3E%3Cpath d='M42 66 L56 80 L88 48' fill='none' stroke='url(%23g)' stroke-width='12' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+
+  <style>
+    :root {
+      --bg: #0B0F17;
+      --surface: #131A26;
+      --surface-elevated: #1B2433;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.18);
+      --primary: #10B981;
+      --primary-glow: rgba(16, 185, 129, 0.25);
+      --cyan: #06B6D4;
+      --gold: #F59E0B;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --radius: 16px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    header.site-header {
+      background: rgba(11, 15, 23, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 0;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      font-size: 19px;
+      color: #fff;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--cyan) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0B0F17;
+      font-weight: 900;
+      font-size: 16px;
+    }
+
+    .lang-switcher {
+      display: inline-flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 3px;
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .lang-btn.active {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .policy-content {
+      padding: 60px 0 80px;
+    }
+
+    .policy-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 48px;
+      box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.6);
+    }
+
+    .policy-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 9999px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #34D399;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: clamp(28px, 4vw, 38px);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .last-updated {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .summary-box {
+      background: rgba(16, 185, 129, 0.05);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 40px;
+    }
+
+    .summary-box h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #34D399;
+      margin-bottom: 8px;
+    }
+
+    .summary-box p {
+      font-size: 14px;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 800;
+      margin: 36px 0 14px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    p, ul {
+      color: #cbd5e1;
+      font-size: 15px;
+      margin-bottom: 16px;
+    }
+
+    ul {
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    strong {
+      color: #fff;
+    }
+
+    footer.site-footer {
+      border-top: 1px solid var(--border);
+      padding: 36px 0;
+      color: var(--text-muted);
+      font-size: 13px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="site-header">
+    <div class="container nav-inner">
+      <a href="./index.html" class="brand-logo">
+        <div class="brand-icon">✓</div>
+        <span>QuestTick</span>
+      </a>
+
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div class="lang-switcher">
+          <button class="lang-btn active" id="btn-lang-en" onclick="setLanguage('en')">EN</button>
+          <button class="lang-btn" id="btn-lang-es" onclick="setLanguage('es')">ES</button>
+        </div>
+
+        <a href="./index.html" style="font-size: 13px; font-weight: 700; color: #fff;">
+          ← <span data-i18n="backHome">Back to Website</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="policy-content">
+    <div class="container">
+      <div class="policy-card">
+        <div class="policy-badge">
+          <span>🛡️</span> Privacy-First Guarantee
+        </div>
+
+        <h1 data-i18n="docTitle">Privacy Policy</h1>
+        <div class="last-updated" data-i18n="docDate">Last Updated: November 24, 2026 · QuestTick Version 1.0.0</div>
+
+        <!-- Quick Summary Box -->
+        <div class="summary-box">
+          <h3 data-i18n="summaryTitle">Summary in Plain English</h3>
+          <p data-i18n="summaryDesc">
+            QuestTick is an offline-capable, local-first browser extension. We do not collect, track, store, or sell any of your browsing activity, personal information, or game progress. Your checklists and item notes stay 100% inside your own browser.
+          </p>
+        </div>
+
+        <!-- Section 1 -->
+        <h2>1. <span data-i18n="s1Title">Data Storage and Processing</span></h2>
+        <p data-i18n="s1Text1">
+          All data generated while using QuestTick—including checked boxes, item notes, custom profiles, progress ratios, and the list of gaming wikis you visit—is saved <strong>exclusively in local browser storage</strong> (using the standard <code>chrome.storage.local</code> API).
+        </p>
+        <p data-i18n="s1Text2">
+          This data remains solely on your physical device. It is never synchronized to QuestTick servers, never transferred to advertising networks, and never accessible by third parties.
+        </p>
+
+        <!-- Section 2 -->
+        <h2>2. <span data-i18n="s2Title">Information We Do NOT Collect</span></h2>
+        <p data-i18n="s2Intro">QuestTick strictly adheres to the Chrome Web Store Single Purpose and Minimal Permissions policies. We never collect:</p>
+        <ul>
+          <li data-i18n="s2Item1"><strong>No browsing history:</strong> We do not track websites, queries, or pages outside of calculating item marks on wikis you actively use.</li>
+          <li data-i18n="s2Item2"><strong>No personally identifiable information (PII):</strong> We do not collect names, email addresses, IP addresses, or device IDs.</li>
+          <li data-i18n="s2Item3"><strong>No telemetry or analytics:</strong> There are no Google Analytics, Mixpanel, Sentry, or third-party tracking pixels bundled inside the extension.</li>
+          <li data-i18n="s2Item4"><strong>No tracking cookies:</strong> QuestTick never sets, inspects, or reads HTTP tracking cookies.</li>
+        </ul>
+
+        <!-- Section 3 -->
+        <h2>3. <span data-i18n="s3Title">License Verification (QuestTick Pro)</span></h2>
+        <p data-i18n="s3Text1">
+          QuestTick connects to the internet <strong>only and exclusively</strong> when a user voluntarily inputs a commercial license key to activate QuestTick Pro.
+        </p>
+        <p data-i18n="s3Text2">
+          In that scenario, QuestTick communicates directly over an encrypted HTTPS connection with the official public Customer Portal API of our merchant of record, <strong>Polar.sh</strong> (<code>https://api.polar.sh/v1/customer-portal/license-keys</code>):
+        </p>
+        <ul>
+          <li data-i18n="s3Item1">The license key entered by the user.</li>
+          <li data-i18n="s3Item2">A generic platform label (e.g., <em>"QuestTick Chrome - Windows"</em>) used by Polar to count concurrent active devices.</li>
+        </ul>
+        <p data-i18n="s3Text3">
+          No personal browsing activity, checklist marks, or page URLs are ever transmitted during license verification. Polar's privacy practices are governed by <a href="https://polar.sh/legal/privacy" target="_blank" rel="noopener">Polar.sh Privacy Policy</a>.
+        </p>
+
+        <!-- Section 4 -->
+        <h2>4. <span data-i18n="s4Title">Permissions Justification</span></h2>
+        <p data-i18n="s4Intro">QuestTick requests only the minimum required Chrome extension permissions:</p>
+        <ul>
+          <li data-i18n="s4Item1"><code>storage</code>: Needed to persist checklist marks, custom notes, user settings, and save profiles locally.</li>
+          <li data-i18n="s4Item2"><code>alarms</code>: Used for background scheduled re-validation of active Pro licenses once every 24 hours.</li>
+          <li data-i18n="s4Item3"><code>scripting</code>: Used only when you explicitly click "Enable on this site" to inject checklist markers into unsupported gaming wikis.</li>
+          <li data-i18n="s4Item4"><code>activeTab</code>: Used to display contextual page title and item completion counts in the popup menu.</li>
+        </ul>
+
+        <!-- Section 5 -->
+        <h2>5. <span data-i18n="s5Title">Data Retention and Deletion</span></h2>
+        <p data-i18n="s5Text">
+          You have full ownership of your data at all times. You can export or import a complete JSON backup of your checklist records from the extension's Settings Hub. If you uninstall QuestTick from your browser, all stored progression data is permanently erased immediately by Chrome.
+        </p>
+
+        <!-- Section 6 -->
+        <h2>6. <span data-i18n="s6Title">Contact Us</span></h2>
+        <p data-i18n="s6Text">
+          If you have questions regarding this Privacy Policy or extension security, please reach out to our team at:
+        </p>
+        <p>
+          📧 <strong>Email:</strong> <a href="mailto:support@questtick.com">support@questtick.com</a><br />
+          🌐 <strong>Website:</strong> <a href="./index.html">https://questtick.com</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      © 2026 QuestTick — Interactive Game Wiki Checklist & Tracker. All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+    const translations = {
+      en: {
+        backHome: "Back to Website",
+        docTitle: "Privacy Policy",
+        docDate: "Last Updated: November 24, 2026 · QuestTick Version 1.0.0",
+        summaryTitle: "Summary in Plain English",
+        summaryDesc: "QuestTick is an offline-capable, local-first browser extension. We do not collect, track, store, or sell any of your browsing activity, personal information, or game progress. Your checklists and item notes stay 100% inside your own browser.",
+        s1Title: "Data Storage and Processing",
+        s1Text1: "All data generated while using QuestTick—including checked boxes, item notes, custom profiles, progress ratios, and the list of gaming wikis you visit—is saved exclusively in local browser storage (using the standard chrome.storage.local API).",
+        s1Text2: "This data remains solely on your physical device. It is never synchronized to QuestTick servers, never transferred to advertising networks, and never accessible by third parties.",
+        s2Title: "Information We Do NOT Collect",
+        s2Intro: "QuestTick strictly adheres to the Chrome Web Store Single Purpose and Minimal Permissions policies. We never collect:",
+        s2Item1: "No browsing history: We do not track websites, queries, or pages outside of calculating item marks on wikis you actively use.",
+        s2Item2: "No personally identifiable information (PII): We do not collect names, email addresses, IP addresses, or device IDs.",
+        s2Item3: "No telemetry or analytics: There are no Google Analytics, Mixpanel, Sentry, or third-party tracking pixels bundled inside the extension.",
+        s2Item4: "No tracking cookies: QuestTick never sets, inspects, or reads HTTP tracking cookies.",
+        s3Title: "License Verification (QuestTick Pro)",
+        s3Text1: "QuestTick connects to the internet only and exclusively when a user voluntarily inputs a commercial license key to activate QuestTick Pro.",
+        s3Text2: "In that scenario, QuestTick communicates directly over an encrypted HTTPS connection with the official public Customer Portal API of our merchant of record, Polar.sh (https://api.polar.sh/v1/customer-portal/license-keys):",
+        s3Item1: "The license key entered by the user.",
+        s3Item2: "A generic platform label (e.g., 'QuestTick Chrome - Windows') used by Polar to count concurrent active devices.",
+        s3Text3: "No personal browsing activity, checklist marks, or page URLs are ever transmitted during license verification. Polar's privacy practices are governed by the Polar.sh Privacy Policy.",
+        s4Title: "Permissions Justification",
+        s4Intro: "QuestTick requests only the minimum required Chrome extension permissions:",
+        s4Item1: "storage: Needed to persist checklist marks, custom notes, user settings, and save profiles locally.",
+        s4Item2: "alarms: Used for background scheduled re-validation of active Pro licenses once every 24 hours.",
+        s4Item3: "scripting: Used only when you explicitly click 'Enable on this site' to inject checklist markers into unsupported gaming wikis.",
+        s4Item4: "activeTab: Used to display contextual page title and item completion counts in the popup menu.",
+        s5Title: "Data Retention and Deletion",
+        s5Text: "You have full ownership of your data at all times. You can export or import a complete JSON backup of your checklist records from the extension's Settings Hub. If you uninstall QuestTick from your browser, all stored progression data is permanently erased immediately by Chrome.",
+        s6Title: "Contact Us",
+        s6Text: "If you have questions regarding this Privacy Policy or extension security, please reach out to our team at:"
+      },
+      es: {
+        backHome: "Volver al Sitio Web",
+        docTitle: "Política de Privacidad",
+        docDate: "Última actualización: 24 de noviembre de 2026 · QuestTick Versión 1.0.0",
+        summaryTitle: "Resumen en Lenguaje Claro",
+        summaryDesc: "QuestTick es una extensión de navegador local y con funcionamiento sin conexión. No recopilamos, rastreamos, almacenamos ni vendemos tu historial de navegación, datos personales ni progreso de juego. Tus listas y notas permanecen 100% dentro de tu propio navegador.",
+        s1Title: "Almacenamiento y Tratamiento de Datos",
+        s1Text1: "Todos los datos generados al usar QuestTick—incluyendo casillas marcadas, notas de ítems, perfiles de partida, porcentajes de avance y páginas visitadas—se guardan exclusivamente en el almacenamiento local de tu navegador (mediante la API estándar chrome.storage.local).",
+        s1Text2: "Estos datos residen únicamente en tu dispositivo físico. Jamás se envían a servidores de QuestTick, nunca se transfieren a redes publicitarias y son inaccesibles para terceros.",
+        s2Title: "Información que NO Recopilamos",
+        s2Intro: "QuestTick cumple estrictamente las políticas de Finalidad Única y Permisos Mínimos de Chrome Web Store. Jamás recopilamos:",
+        s2Item1: "Sin historial de navegación: No monitorizamos páginas ni búsquedas fuera del conteo de casillas en las wikis donde tú lo activas.",
+        s2Item2: "Sin datos personales (PII): No solicitamos nombres, correos electrónicos, direcciones IP ni identificadores únicos de dispositivo.",
+        s2Item3: "Sin analíticas ni telemetría: No incluimos Google Analytics, Mixpanel, Sentry ni ningún script de seguimiento de terceros.",
+        s2Item4: "Sin cookies de rastreo: QuestTick nunca crea, lee ni analiza cookies HTTP.",
+        s3Title: "Validación de Licencias (QuestTick Pro)",
+        s3Text1: "QuestTick se conecta a internet única y exclusivamente cuando el usuario introduce de forma voluntaria una clave para activar QuestTick Pro.",
+        s3Text2: "En ese caso, la extensión se comunica mediante HTTPS cifrado con la API pública oficial de Polar.sh (https://api.polar.sh/v1/customer-portal/license-keys):",
+        s3Item1: "La clave de licencia introducida por el usuario.",
+        s3Item2: "Una etiqueta genérica de plataforma (ej. 'QuestTick Chrome - Windows') para el límite de dispositivos activos en Polar.",
+        s3Text3: "En ningún momento se envían datos de navegación, checks ni URLs de wikis. Las prácticas de privacidad de Polar se rigen por la Política de Privacidad de Polar.sh.",
+        s4Title: "Justificación de Permisos",
+        s4Intro: "QuestTick solicita únicamente los permisos indispensables para su funcionamiento:",
+        s4Item1: "storage: Imprescindible para guardar en local tus marcas, notas, ajustes y perfiles de partida.",
+        s4Item2: "alarms: Utilizado para revalidar la licencia Pro una vez cada 24 horas en segundo plano.",
+        s4Item3: "scripting: Utilizado únicamente al pulsar 'Activar en este sitio' para inyectar casillas en wikis no incluidas por defecto.",
+        s4Item4: "activeTab: Utilizado para mostrar el título de la wiki y el avance en el menú emergente del icono.",
+        s5Title: "Conservación y Eliminación de Datos",
+        s5Text: "Eres el dueño absoluto de tu información. Puedes exportar o importar una copia de seguridad en JSON desde el Hub de Opciones. Si desinstalas QuestTick de tu navegador, Chrome elimina de forma inmediata y definitiva todos los datos almacenados.",
+        s6Title: "Contacto",
+        s6Text: "Para cualquier duda o consulta sobre esta política de privacidad o la seguridad de la extensión, contáctanos en:"
+      }
+    };
+
+    let currentLang = 'en';
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('qt_web_lang', lang);
+
+      document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-lang-es').classList.toggle('active', lang === 'es');
+
+      const dict = translations[lang] || translations.en;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) {
+          el.textContent = dict[key];
+        }
+      });
+    }
+
+    const saved = localStorage.getItem('qt_web_lang');
+    if (saved === 'es' || (!saved && navigator.language && navigator.language.startsWith('es'))) {
+      setLanguage('es');
+    } else {
+      setLanguage('en');
+    }
+  </script>
+</body>
+</html>
